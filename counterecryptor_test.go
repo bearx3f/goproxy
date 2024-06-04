@@ -49,7 +49,6 @@ func TestCounterEncIdenticalStreams(t *testing.T) {
 	out1, out2 := make([]byte, nout), make([]byte, nout)
 	io.ReadFull(&c1, out1)
 	tmp := out2[:]
-	rand.Seed(0xFF43109)
 	for len(tmp) > 0 {
 		n := 1 + rand.Intn(256)
 		if n > len(tmp) {

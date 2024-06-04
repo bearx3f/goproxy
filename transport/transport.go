@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -471,7 +470,6 @@ func useProxy(addr string) bool {
 // http://proxy.com|http           http to proxy, http to anywhere after that
 //
 // Note: no support to https to the proxy yet.
-//
 type connectMethod struct {
 	proxyURL     *url.URL // nil for no proxy, else full proxy URL
 	targetScheme string   // "http" or "https"
@@ -721,7 +719,7 @@ func canonicalAddr(url *url.URL) string {
 	return addr
 }
 
-func responseIsKeepAlive(res *http.Response) bool {
+func responseIsKeepAlive(_ *http.Response) bool {
 	// TODO: implement.  for now just always shutting down the connection.
 	return false
 }
@@ -782,6 +780,6 @@ type discardOnCloseReadCloser struct {
 }
 
 func (d *discardOnCloseReadCloser) Close() error {
-	io.Copy(ioutil.Discard, d.ReadCloser) // ignore errors; likely invalid or already closed
+	io.Copy(io.Discard, d.ReadCloser) // ignore errors; likely invalid or already closed
 	return d.ReadCloser.Close()
 }

@@ -3,7 +3,7 @@ package goproxy
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -62,19 +62,18 @@ func testSignerTls(t *testing.T, ca tls.Certificate) {
 	server := httptest.NewUnstartedServer(ConstantHanlder(expected))
 	defer server.Close()
 	server.TLS = &tls.Config{Certificates: []tls.Certificate{*cert, ca}}
-	server.TLS.BuildNameToCertificate()
 	server.StartTLS()
 	certpool := x509.NewCertPool()
 	certpool.AddCert(ca.Leaf)
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{RootCAs: certpool},
 	}
-	asLocalhost := strings.Replace(server.URL, "127.0.0.1", "localhost", -1)
+	asLocalhost := strings.ReplaceAll(server.URL, "127.0.0.1", "localhost")
 	req, err := http.NewRequest("GET", asLocalhost, nil)
 	orFatal("NewRequest", err, t)
 	resp, err := tr.RoundTrip(req)
 	orFatal("RoundTrip", err, t)
-	txt, err := ioutil.ReadAll(resp.Body)
+	txt, err := io.ReadAll(resp.Body)
 	orFatal("ioutil.ReadAll", err, t)
 	if string(txt) != expected {
 		t.Errorf("Expected '%s' got '%s'", expected, string(txt))

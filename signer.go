@@ -90,6 +90,7 @@ func signHost(ca tls.Certificate, hosts []string) (cert *tls.Certificate, err er
 		}
 	default:
 		err = fmt.Errorf("unsupported key type %T", ca.PrivateKey)
+		return
 	}
 
 	var derBytes []byte
@@ -100,9 +101,4 @@ func signHost(ca tls.Certificate, hosts []string) (cert *tls.Certificate, err er
 		Certificate: [][]byte{derBytes, ca.Certificate[0]},
 		PrivateKey:  certpriv,
 	}, nil
-}
-
-func init() {
-	// Avoid deterministic random numbers
-	rand.Seed(time.Now().UnixNano())
 }

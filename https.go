@@ -2,11 +2,11 @@ package goproxy
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -72,8 +72,8 @@ func stripPort(s string) string {
 }
 
 func (proxy *ProxyHttpServer) dial(network, addr string) (c net.Conn, err error) {
-	if proxy.Tr.Dial != nil {
-		return proxy.Tr.Dial(network, addr)
+	if proxy.Tr.DialContext != nil {
+		return proxy.Tr.DialContext(context.Background(), network, addr)
 	}
 	return net.Dial(network, addr)
 }
@@ -233,7 +233,7 @@ func (proxy *ProxyHttpServer) handleHttps(w http.ResponseWriter, r *http.Request
 				ctx.Logf("req %v", r.Host)
 
 				if !httpsRegexp.MatchString(req.URL.String()) {
-					req.URL, err = url.Parse("https://" + r.Host + req.URL.String())
+					req.URL, err = url.Parse("https://" + req.Host + req.URL.String())
 				}
 
 				// Bug fix which goproxy fails to provide request
@@ -273,9 +273,7 @@ func (proxy *ProxyHttpServer) handleHttps(w http.ResponseWriter, r *http.Request
 
 				text := resp.Status
 				statusCode := strconv.Itoa(resp.StatusCode) + " "
-				if strings.HasPrefix(text, statusCode) {
-					text = text[len(statusCode):]
-				}
+				text = strings.TrimPrefix(text, statusCode)
 				// always use 1.1 to support chunked encoding
 				if _, err := io.WriteString(rawClientTls, "HTTP/1.1"+" "+statusCode+text+"\r\n"); err != nil {
 					ctx.Warnf("Cannot write TLS response HTTP status from mitm'd client: %v", err)
@@ -410,7 +408,7 @@ func (proxy *ProxyHttpServer) NewConnectDialToProxyWithHandler(https_proxy strin
 			}
 			defer resp.Body.Close()
 			if resp.StatusCode != 200 {
-				resp, err := ioutil.ReadAll(resp.Body)
+				resp, err := io.ReadAll(resp.Body)
 				if err != nil {
 					return nil, err
 				}
@@ -451,7 +449,7 @@ func (proxy *ProxyHttpServer) NewConnectDialToProxyWithHandler(https_proxy strin
 			}
 			defer resp.Body.Close()
 			if resp.StatusCode != 200 {
-				body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 500))
+				body, err := io.ReadAll(io.LimitReader(resp.Body, 500))
 				if err != nil {
 					return nil, err
 				}

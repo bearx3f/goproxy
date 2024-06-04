@@ -25,7 +25,7 @@ func isWebSocketRequest(r *http.Request) bool {
 		headerContains(r.Header, "Upgrade", "websocket")
 }
 
-func (proxy *ProxyHttpServer) serveWebsocketTLS(ctx *ProxyCtx, w http.ResponseWriter, req *http.Request, tlsConfig *tls.Config, clientConn *tls.Conn) {
+func (proxy *ProxyHttpServer) serveWebsocketTLS(ctx *ProxyCtx, _ http.ResponseWriter, req *http.Request, tlsConfig *tls.Config, clientConn *tls.Conn) {
 	targetURL := url.URL{Scheme: "wss", Host: req.URL.Host, Path: req.URL.Path}
 
 	// Connect to upstream
